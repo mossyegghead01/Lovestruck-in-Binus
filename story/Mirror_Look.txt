@@ -1,0 +1,7 @@
+As you gaze into the mirror, your reflection begins to shift, morphing into different versions of yourself—each representing a path you could have taken, choices you might have made. The mirror asks you in a voice that seems both familiar and foreign:
+
+> "#MAre you willing to accept all that you are?#r"
+
+#opt
+Yes#end TRUE ENDING
+No#end UNFINISHED ENDING

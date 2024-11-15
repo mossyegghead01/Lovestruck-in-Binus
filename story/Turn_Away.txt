@@ -1,0 +1,6 @@
+Unable to face what the mirror might reveal, you step back. The treasures around you begin to fade, becoming nothing more than illusions. The chamber grows colder, and a sense of loss settles deep within you.
+
+With a heavy heart, you leave the library, knowing you've left something important behind.
+
+#opt
+Leave the library#end BITTER ENDING

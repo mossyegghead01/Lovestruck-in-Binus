@@ -1,0 +1,16 @@
+Your fingers brush the rough surface of the codex, sending a #Bshiver#r down your spine. The sigil on the cover begins to glow faintly, responding to your touch. As you open it, the ancient text rearranges itself, morphing into symbols you can understand.
+
+You read:
+
+> "#RHe who seeks knowledge#r must first know himself."
+
+The words flicker, and suddenly the text transforms into a riddle:
+
+> "I am not alive, but I can grow;
+> I do not breathe, yet I can die.
+> What am I?"
+
+#opt
+Answer: Knowledge#Correct_Answer.txt
+Answer: A tree#Wrong_Answer.txt
+Step back from the codex#Step_Back.txt

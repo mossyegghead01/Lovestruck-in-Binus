@@ -1,0 +1,9 @@
+You open the book carefully, and the pages seem to shift under your gaze. Strange symbols fill the margins, and the text reads:
+
+> "The codex hides not only knowledge, but reflections of those who seek it. Only those who accept their true self may unlock its power."
+
+The words glow faintly before fading back into the parchment.
+
+#opt
+Return to the codex#Inspect_Codex.txt
+Keep searching#Deeper_Shelves.txt

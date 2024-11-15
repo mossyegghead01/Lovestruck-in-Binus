@@ -1,0 +1,11 @@
+With the map in hand, you make your way deeper into the library, past rows of towering bookshelves and ancient tomes. You finally reach a door, hidden behind a tapestry. The emerald symbol on the map matches the carving on the door.
+
+You push it open and step into a chamber filled with treasures: artifacts, jewels, and scrolls. But at the center stands a mirror, covered in a layer of frost. An inscription above it reads:
+
+> "Face your true self, or be forever bound."
+
+What will you do?
+
+#opt
+Look into the mirror#Mirror_Look.txt
+Turn away from the mirror#Turn_Away.txt

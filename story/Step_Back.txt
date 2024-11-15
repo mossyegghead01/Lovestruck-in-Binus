@@ -1,0 +1,7 @@
+Something about the codex feels... off. As if it holds secrets too dangerous to uncover alone. Perhaps it would be wiser to seek help or consult the other books in the library before proceeding.
+
+The fire crackles softly behind you, casting flickering shadows on the walls, and you feel a lingering sense of dread.
+
+#opt
+Return to the library shelves#Library_Shelves.txt
+Leave the library#Leave_Library.txt
