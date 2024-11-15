@@ -8,9 +8,10 @@ you : "My name is Shannon. Nice to meet you"
 "Nice to meet you too," he smiles. 
 
 You smile back at him and you decided to sit together with him.
-You start to observe him and realized how goodlooking he is, with a korean-like face and a lean body. Then suddenly, he caught her looking at him and he threw her a questioning smile.
+You start to observe him and realized how good-looking he is, with a Korean-like face and a lean body. Then suddenly, he caught her looking at him and he threw her a questioning smile.
 
---> Look away and blush (case 2a)
---> Say "I like how you look" (case 2b)
+#b[PLEASE SAVE HERE TO RETAIN YOUR PROGRESS!]#r
 
-
+#opt
+Look away and blush#CASE2_A.txt
+Say "I like how you look"#CASE2_B.txt

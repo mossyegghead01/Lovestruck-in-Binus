@@ -1,8 +1,11 @@
 So he threw me a playful smile and suddenly whispered, "Can't handle my hotness huh?"
 
-"uhh no, you wish!" i look away
+"Uhh... no, you wish!" i look away
 
 "do you have plans after this?"
 
---> umm i dont think so
---> i'am sorry i already have things planned
+#b[PLEASE SAVE HERE TO RETAIN YOUR PROGRESS!]#r
+
+#opt
+Umm... I don't think so#CASE4_A.txt
+I'm sorry, I already have other things planned#CASE4_B.txt

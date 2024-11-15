@@ -1,0 +1,10 @@
+WELCOME TO LOVESTRUCK IN BINUS
+
+Here, you are playing as a girl named Shannon, a freshmen of Binus University. Your mission is to find a soulmate in uni.
+
+The rule's simple. You have to choose one of the options given and continue the story based on those.
+
+The ending will be different based on what options you choose.
+
+#opt
+Let's go!#CHAPTER_1.txt

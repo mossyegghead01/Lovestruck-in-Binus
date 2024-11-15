@@ -207,7 +207,9 @@ void storyRunner(const char *pos) {
 
     FILE *fp = fopen(filepath, "r");
     if (!fp) {
-        printf("Could not find the file %s!\n", pos);
+		printf("The story ends here... for now.\n");
+		printf("But, there'll be more content in the future!\n");
+		printf("Though I hope you remembered to save!\n");
         pause();
         return;
     }
@@ -250,6 +252,7 @@ void storyRunner(const char *pos) {
     int j;
     int formatting = 0;
     int st = 0;
+    printf(RESET);
     for (i = 0; i < li; i++){
     	for (j = 0; j < strlen(lines[i]); j++){
     		if (formatting){
@@ -277,6 +280,7 @@ void storyRunner(const char *pos) {
 	
 	int s = 0;
 	int r = 1;
+	printf(RESET);
 	while (r){
 		clear();
 		int i;

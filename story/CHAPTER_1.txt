@@ -2,7 +2,6 @@ Today is the first day of fyp, you are shannon, a freshmen who feels lost, lonel
 
 Then he said "c'mon, would you like to seat with me?"
 
---> Sure! (case 1a)
---> No thanks, I'm waiting for a friend (case 1b)
-
-
+#opt
+Sure!#CASE1_A.txt
+No thanks, I'm waiting for a friend#CASE1_B.txt
