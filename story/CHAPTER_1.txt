@@ -1,0 +1,8 @@
+Today is the first day of fyp, you are shannon, a freshmen who feels lost, lonely, and nervous in the middle of these crowd of strangers. Suddenly, you hear a footstep approach you. He asked you if you're lost and you said yes.
+
+Then he said "c'mon, would you like to seat with me?"
+
+--> Sure! (case 1a)
+--> No thanks, I'm waiting for a friend (case 1b)
+
+

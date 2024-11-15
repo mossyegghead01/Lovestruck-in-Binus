@@ -1,0 +1,35 @@
+prolog
+
+--this is a comment
+--opsi: 1. fm 1 batch 2. fl 3. classmate 4. diff major
+
+WELCOME TO BINUS UNIVERSITY
+
+Today is the first day of fyp, you are shannon, a freshmen who feels lost, lonely, and nervous in the middle of these crowd of strangers. Suddenly, you hear a footstep approach you. 
+
+"hey? you lost?"
+
+What will you do?
+
+--> say yes --game start
+--> leave --main menu
+
+WELCOME TO LOVESTRUCK IN BINUS
+
+Here, you are playing as a girl named Shannon, a freshmen of Binus University. Your mission is to find a soulmate in uni.
+
+The rule's simple. You have to choose one of the options given and continue the story based on those.
+
+The ending will be different based on what options you choose.
+
+The game will start in
+3
+2
+1
+
+===========================================================================
+===========================================================================
+===========================================================================
+
+
+
