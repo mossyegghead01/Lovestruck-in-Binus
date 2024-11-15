@@ -212,7 +212,7 @@ void storyRunner(const char *pos) {
         return;
     }
     
-    char lines[256][256];
+    char lines[512][512];
     int li = 0;
     Option options[10];
     int opti = 0;
@@ -222,7 +222,7 @@ void storyRunner(const char *pos) {
     while ((ch = fgetc(fp)) != EOF){
     	ungetc(ch, fp);
     	
-    	char line[256] = "";
+    	char line[512] = "";
     	if (!optm){
 			if (fgets(line, sizeof(line), fp) != NULL) {
 				int len = strlen(line);
