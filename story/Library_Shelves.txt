@@ -1,8 +1,0 @@
-You wander through the towering shelves, running your fingers along the spines of books whose titles are faded with age. The library is vast, and you can feel the weight of centuries of knowledge pressing in from all sides.
-
-One book catches your eye-a small, worn tome with a golden clasp. The title reads: #b"On Secrets and Shadows."#r Perhaps it contains a clue about the codex...
-
-#opt
-Open the mysterious tome#Mysterious_Tome.txt
-Keep searching the shelves#Deeper_Shelves.txt
-Return to the codex#Inspect_Codex.txt

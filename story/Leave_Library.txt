@@ -1,7 +1,0 @@
-You take one last look around the library, the faint hum of magic lingering in the air. The codex rests silently on the pedestal, its secrets hidden once more. You turn and walk away, the echo of your footsteps fading into the shadows.
-
-As you leave, you can't shake the feeling that this place holds mysteries you're not yet ready to understand. Perhaps one day, you'll return.
-
-#opt
-Step outside#end UNFULFILLED ENDING
-Go back inside#Intro.txt

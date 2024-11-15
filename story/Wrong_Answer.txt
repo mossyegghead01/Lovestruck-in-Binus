@@ -1,9 +1,0 @@
-You say "A tree," and the book's glow fades. The codex shuts with a sharp snap, rejecting your answer. You feel a cold rush of air, as if the room itself is disappointed.
-
-The sigil no longer pulses, and you sense that the codex will not reveal its secrets to you again.
-
-You sigh. Perhaps there is more you need to learn before attempting this riddle again.
-
-#opt
-Leave the library#Leave_Library.txt
-Try again#Inspect_Codex.txt

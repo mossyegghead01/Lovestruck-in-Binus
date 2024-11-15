@@ -1,7 +1,0 @@
-As you whisper "Knowledge," the codex hums with approval. The pages begin to turn by themselves, revealing a map sketched in fine, detailed ink. It leads to a hidden room within the library, marked only with a small #Gemerald symbol#r.
-
-You realize this is the map to a hidden treasure-one that many have sought but none have found. You feel a surge of excitement, but also a twinge of caution. What lies ahead?
-
-#opt
-Follow the map#Follow_Map.txt
-Close the codex and leave#Leave_Library.txt

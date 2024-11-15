@@ -1,6 +1,4 @@
-=========================
-|  The Forgotten Codex  |
-=========================
+Lovestruck in Binus
 #end
-Intro.txt
+PROLOG.txt
 #end

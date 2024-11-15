@@ -1,9 +1,0 @@
-Venturing deeper into the library's depths, you discover a hidden alcove, filled with dusty scrolls and artifacts that seem untouched by time. Among them, a fragment of parchment bears a warning:
-
-> "Beware the mirror in the hidden chamber-it reveals all that you are, and binds those who cannot face themselves."
-
-The words send a chill through you. Is the codex leading you toward this mirror?
-
-#opt
-Return to the codex#Inspect_Codex.txt
-Leave the library#Leave_Library.txt
