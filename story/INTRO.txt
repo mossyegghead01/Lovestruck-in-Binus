@@ -1,6 +1,6 @@
-WELCOME TO LOVESTRUCK IN BINUS
+#bWELCOME TO LOVESTRUCK IN BINUS#r
 
-Here, you are playing as a girl named Shannon, a freshmen of Binus University. Your mission is to find a soulmate in uni.
+Here, you are playing as a girl named #b#BShannon#r, a freshmen of Binus University. Your mission is to find a soulmate in uni.
 
 The rule's simple. You have to choose one of the options given and continue the story based on those.
 
