@@ -4,9 +4,6 @@
 #include <time.h>
 #include <conio.h>
 
-#define pause() system("pause")
-#define clear() system("cls")
-
 #define RESET       "\x1b[0m"
 #define BOLD        "\x1b[1m"
 #define UNDERLINE   "\x1b[4m"
@@ -17,548 +14,779 @@
 #define MAGENTA     "\x1b[35m"
 #define CYAN        "\x1b[36m"
 
+// TODO: Comments...
+// Yeah I'm on the verge of breaking down while writing this TODO
+// Gosh I missed dynamic sized string
+
+// Single-linked list structure for file line
+typedef struct Line{
+	char *line;
+	struct Line *next;
+} Line;
+
+// Double-linked list structure for options
 typedef struct Option{
-	char optText[128];
-	char optDest[40];
+	char *text;
+	char *to;
+	
+	struct Option *next;
+	struct Option *prev;
 } Option;
 
+// Double-linked list structure for game save
 typedef struct Save{
-	char saveName[128];
-	char saveDest[20];
+	char *name;
+	char *pos;
+	
+	struct Save *next;
+	struct Save *prev;
 } Save;
 
-typedef struct Setting{
-	char title[256];
-	char init[50];
-} Setting;
+// Globals
+Line *head = NULL;
+Option *oHead = NULL;
+Option *oTail = NULL;
+Save *sHead = NULL;
+Save *sTail = NULL;
 
+// Clean the mess that is using malloc
+void cleanup(){
+	while (head){
+		Line *temp = head;
+		head = head->next;
+		free(temp->line);
+		free(temp);
+	}
+	
+	if (oTail){
+		// if Tail exist, it probably has link to head.
+		// Making it null prevent the pointer from going around and try to free an already freed mem
+		oTail->next = NULL;
+	}
+	
+	while (oHead){
+		Option *temp = oHead;
+		oHead = oHead->next;
+		free(temp->text);
+		free(temp->to);
+		free(temp);
+	}
+	
+	head = NULL;
+	oHead = NULL;
+	oTail = NULL;
+}
+
+// Universal implementation for clearing terminal
+void clear(){
+	printf("\033[H\033[J");
+	fflush(stdout);
+}
+
+// Universal implementation for pausing
+void pause(){
+	printf("Press any key to continue...");
+	getch();
+	printf("\n");
+}
+
+// Get key and return a more readable value representation
+// Only use for some special often-used keys.
+// Example: Up and down key
 int getKey(){
 	int c = getch();
     if (c == 0 || c == 224){
         c = getch();
 		if (c == 72){
-			return 1;
+			return 1; // Up
 		}
 		if(c == 80){
-			return 2;
+			return 2; // Down
 		}
 	}else if(c == 13){
-		return 3;
+		return 3; // Enter
+	}else if (c == 's'){
+		return 4; // 's' key
 	}else if(c == 27){
-		return 4;
+		return 5; // Escape
 	}
 	return 0;
 }
 
-void delay(int ms){
-    clock_t st = clock();
-    
-    while (clock() < st + ms);
+// Ask user if they understood the consequences of their action...
+int confirmAction(const char *actionName){
+	printf("Are you sure you want to %s (Y/N)?\n", actionName);
+	char key;
+	while (key != 'y' && key != 'n'){
+		key = getch();
+	}
+	
+	return (key == 'y') ? 1 : 0;
 }
 
-void printef(char c){
-	switch (c){
-    	case 'r':
-    		printf(RESET);
-    		break;
-    	case 'b':
-    		printf(BOLD);
-    		break;
-    	case 'u':
-    		printf(UNDERLINE);
-    		break;
-    	case 'R':
-    		printf(RED);
-    		break;
-    	case 'G':
-    		printf(GREEN);
-    		break;
-    	case 'Y':
-    		printf(YELLOW);
-    		break;
-    	case 'B':
-    		printf(BLUE);
-    		break;
-    	case 'M':
-    		printf(MAGENTA);
-    		break;
-    	case 'C':
-    		printf(CYAN);
-    		break;
-    	case '#':
-    		printf("#");
-    		delay(50);
-    		break;
-    	default:
-    		printf("#");
-    		delay(50);
-    		printf("%c", c);
-    		delay(50);
-	}
-}
-
-void storyRunner(const char *pos);
-
-void saveGame(const char *pos){
-	FILE *fp = fopen("saves.txt", "r");
-	if (!fp){
-		fp = fopen("saves.txt", "w+");
-	}
-	int i;
+// Read file line and return pointer
+// Why pointer you might ask?
+// It's easier in some cases
+char *readLine(FILE *fp, int replaceSymbols){
+	int buffSize = 128;
 	
-	Save saves[5];
-	for (i = 0; i < 5; i++){
-		strcpy(saves[i].saveDest, "EMPTY");
-		strcpy(saves[i].saveName, "EMPTY");
-	}
+	char *line = malloc(buffSize);
+	strcpy(line, "");
 	
-	int si = 0;
-	int ch;
-	while ((ch = fgetc(fp)) != EOF && si < 5){
-		ungetc(ch, fp);
-		Save save;
-		fscanf(fp, "%[^#]#%[^\n]\n", save.saveName, save.saveDest);
-		saves[si++] = save;
-	}
-	
-	fclose(fp);
-	
-	int s = 0;
-	int r = 1;
-	while (r){
-		clear();
-		for (i = 0; i < 5; i++){
-			if (strcmp(saves[i].saveName, "EMPTY") == 0 && strcmp(saves[i].saveDest, "EMPTY") == 0){
-				printf("%s %s%d. Empty Save\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1);
-			}else{
-				printf("%s %s%d. %s\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1, saves[i].saveName);
+	int pos = 0;
+	int ch = 0;
+	int flag = 0;
+	while (ch != '\n'){
+		ch = fgetc(fp);
+		
+		// Cheeck if line is comment
+		if (ch == '-' && replaceSymbols){
+			int ch2 = fgetc(fp);
+			if (ch2 == '-'){
+				line[pos] = '\0';
+				while ((ch = fgetc(fp)) != '\n');
+				return line;
 			}
+			
+			ungetc(ch2, fp);
 		}
 		
-		int o = 1;
-		switch(getKey()){
-			case 0:
-				break;
-			case 1:
-				--s;
-				if (s < 0) s = 4;
-				break;
-			case 2:
-				++s;
-				if (s > 4) s = 0;
-				break;
-			case 3:
-				if (strcmp(saves[s].saveName, "EMPTY") != 0 && strcmp(saves[s].saveDest, "EMPTY") != 0){
-					printf("This slot already has save in it, are you sure you want to overwrite it (Y|N)?\n");
-					while (1){
-						char c = getch();
-						if (c == 'y' || c == 'n'){
-							o = (c == 'y') ? 1 : 0;
-							break;
-						}
-					}
-				}
-				if (o){
-					r = 0;
-				}
-				break;
-			case 4:
-				storyRunner(pos);
-				return;
-		}
-	}
-	
-	char sName[128];
-	while (1){
-		printf("Please enter a save name: ");
-		scanf(" %[^\n]", sName);
-		if (strlen(sName) < 3){
-			printf("Save name must be at least 3 characters in length!\n");
-			pause();
-		}else{
-			sName[127] = '\0';
+		// Just in case we're reading end of file
+		if (ch == EOF){
+			if (pos == 0){
+				free(line);
+				return NULL;
+			}
 			break;
 		}
+		
+		// We need more RAM!
+		if (pos + 5 >= buffSize - 1){
+			buffSize *= 2; // To infinity and trash bin
+			line = realloc(line, buffSize);
+		}
+		
+		line[pos] = '\0';
+		
+		// printef() but cooler
+		if (ch == '#' && !flag && replaceSymbols){
+			flag = 1;
+		}else if (flag){
+			switch (ch){
+				case 'r':
+					strcat(line, RESET);
+					pos += strlen(RESET);
+					break;
+				case 'b':
+					strcat(line, BOLD);
+					pos += strlen(BOLD);
+					break;
+				case 'u':
+					strcat(line, UNDERLINE);
+					pos += strlen(UNDERLINE);
+					break;
+				case 'R':
+					strcat(line, RED);
+					pos += strlen(RED);
+					break;
+				case 'G':
+					strcat(line, GREEN);
+					pos += strlen(GREEN);
+					break;
+				case 'Y':
+					strcat(line, YELLOW);
+					pos += strlen(YELLOW);
+					break;
+				case 'B':
+					strcat(line, BLUE);
+					pos += strlen(BLUE);
+					break;
+				case 'M':
+					strcat(line, MAGENTA);
+					pos += strlen(MAGENTA);
+					break;
+				case 'C':
+					strcat(line, CYAN);
+					pos += strlen(CYAN);
+					break;
+				case '#':
+					line[pos++] = '#';
+					break;
+				default:
+					line[pos++] = '#';
+					line[pos++] = ch;
+					break;
+			}
+			flag = 0;
+		}else{
+			line[pos++] = ch;
+		}
 	}
-	strcpy(saves[s].saveName, sName);
-	strcpy(saves[s].saveDest, pos);
 	
-	fp = fopen("saves.txt", "w");
-	for (i = 0; i < 5; i++){
-		fprintf(fp, "%s#%s\n", saves[i].saveName, saves[i].saveDest);
-	}
-	
-	printf("Your progress have been saved!\n");
-	
-	fclose(fp);
-	pause();
+	line[pos] = '\0';
+	return line;
 }
 
-void storyRunner(const char *pos) {
+// Pull the lever kronk
+// proceed to pull saves instead
+void pullSaves(int addEmpty){
+	FILE *fp = fopen("saves.txt", "r");
+	if (!fp){
+		fp = fopen("saves.txt", "w");
+		fp = freopen("saves.txt", "r", fp);
+	}
+	
+	char *line;
+	while ((line = readLine(fp, 0)) != NULL){
+		printf("%s\n", line);
+		int nIdx = 1;
+		int len = strlen(line);
+		char *original = line;
+		
+		while (*(line) != '#' && *(line) != '\0'){
+			nIdx++;
+			line++;
+		}
+		
+		line = original;
+		
+		char *name = malloc(nIdx + 1);
+		int i;
+		for (i = 0; i < nIdx - 1; i++){
+			name[i] = *(line++);
+		}
+		name[nIdx - 1] = '\0';
+		
+		line = original;
+		
+		char *pos = malloc(len - nIdx + 1);
+		strcpy(pos, line + nIdx);
+		pos[len - nIdx - 1] = '\0';
+		
+		line = original;
+		free(line);
+		
+		Save *sv = malloc(sizeof(Save));
+		sv->name = name;
+		sv->pos = pos;
+		sv->next = NULL;
+		sv->prev = NULL;
+		
+		if (!sHead && !sTail){
+			sHead = sv;
+			sTail = sv;
+			
+			sv->next = sv;
+			sv->prev = sv;
+		}else{
+			sTail->next = sv;
+			sv->prev = sTail;
+			
+			sv->next = sHead;
+			sHead->prev = sv;
+			
+			sTail = sv;
+		}
+	}
+	fclose(fp);
+	
+	if (addEmpty){
+		Save *sv = malloc(sizeof(Save));
+		char *tName = malloc(strlen("New Save") + 1);
+		strcpy(tName, "New Save");
+		sv->name = tName;
+		sv->pos = NULL;
+		sv->next = NULL;
+		sv->prev = NULL;
+		
+		if (!sHead && !sTail){
+			sHead = sv;
+			sTail = sv;
+			
+			sv->next = sv;
+			sv->prev = sv;
+		}else{
+			sTail->next = sv;
+			sv->prev = sTail;
+			
+			sv->next = sHead;
+			sHead->prev = sv;
+			
+			sTail = sv;
+		}
+	}
+}
+
+// Wrong levahhhhhhhh
+// And flushed
+void saveAndClean(){
+	FILE *fp = fopen("saves.txt", "w");
+	
+	if (sHead != NULL){
+		Save *curr = sHead;
+		do{
+			if (curr->pos){
+				fprintf(fp, "%s#%s\n", curr->name, curr->pos);
+			}
+			curr = curr->next;
+		} while (curr != sHead);
+		fclose(fp);
+	
+		if (sTail){
+			sTail->next = NULL;
+		}
+		
+		while (sHead){
+			Save *temp = sHead;
+			sHead = sHead->next;
+			free(temp->name);
+			free(temp->pos);
+			free(temp);
+		}
+	}
+	
+	sHead = NULL;
+	sTail = NULL;
+}
+
+// Save menu
+void saveGame(const char *file){
+	pullSaves(1);
+	
+	Save *sel = sHead;
+	int r = 1;
+	int c = 0;
+	while (r){
+		clear();
+		printf("Save Game\n");
+		
+		int i = 1;
+		Save *curr = sHead;
+		do{
+			printf("%s %s%d. %s\n" RESET, curr == sel ? GREEN ">>" : "  ", curr == sel ? UNDERLINE : "", i++, curr->name);
+			printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection %s[Esc]%s: Cancel saving\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET, BOLD YELLOW, RESET);
+			curr = curr->next;
+		}while (curr != sHead);
+		
+		switch (getKey()){
+			case 1:
+				sel = sel->prev;
+				break;
+			case 2:
+				sel = sel->next;
+				break;
+			case 3:
+				if (sel->pos){
+					r = !confirmAction("override this save");
+				}else{
+					r = 0;
+				}
+				c = !r;
+				break;
+			case 5:
+				c = 0;
+				r = 0;
+				break;
+			case 6:
+				break;
+		}
+	}
+	
+	if (c){
+		printf("Enter save name: ");
+		int buff = 128;
+		char *name = malloc(buff);
+		
+		char ch;
+		int pos = 0;
+		while ((ch = getchar()) != '\n'){
+			if (ch == EOF){
+				break;
+			}
+			
+			if (pos >= buff - 1){
+				buff *= 2;
+				
+				name = realloc(name, buff);
+			}
+			
+			name[pos++] = ch;
+		}
+		
+		name[pos] = '\0';
+		free(sel->name);
+		sel->name = name;
+		
+		char *temp = malloc(strlen(file) + 1);
+		strcpy(temp, file);
+		sel->pos = temp;
+	}
+	
+	saveAndClean();
+}
+
+// The heart of the game
+void storyRunner(const char *fileName){
+	// Need to re-reserve memory for file name because cleanup will free it
+	// It's quite miraculous that the cleanup didn't cause issue earlier tbh
+	char *file = malloc(strlen(fileName) + 1);
+	strcpy(file, fileName);
+	
 	clear();
-	if (pos[0] == 'e' && pos[1] == 'n' && pos[2] =='d'){
-		printf("You've reached the end of the story!\n");
-		printf("Ending reached: %s \n", pos + 4);
+	cleanup(); // Here due to the recursive nature of this function
+	
+	// Read ending
+	if (file[0] == 'e' && file[1] == 'n' && file[2] == 'd'){
+		printf("You've reached and ending!\n");
+		printf("Ending reached: %s\n", file + 4);
+		pause();
+		cleanup(); // Better try cleaning up than not amirite?
+		return;
+	}
+	
+	// Construct file full path
+	char *fullPath = malloc(strlen(file) + strlen("./story/") + 1);
+	strcpy(fullPath, "");
+	strcat(fullPath, "./story/");
+	strcat(fullPath, file);
+	
+	// Open the file
+	FILE *fp = fopen(fullPath, "r");
+	// Well, I'm pretty sure we're going to encounter these a lot...
+	if (fp == NULL){
+		printf("Seems like this part of the story is missing!\n");
+		printf("Why not return later?\n");
+		printf("(Hopefully you remembered to save in the previous page)\n");
+		printf("Missing file: %s\n", fullPath); // Debug, remove or use flag later
+		free(fullPath);
+		fclose(fp);
 		pause();
 		return;
 	}
-    char filepath[256];
-    snprintf(filepath, sizeof(filepath), "./story/%s", pos);
-
-    FILE *fp = fopen(filepath, "r");
-    if (!fp) {
-		printf("The story ends here... for now.\n");
-		printf("But, there'll be more content in the future!\n");
-		printf("Though I hope you remembered to save!\n");
-        pause();
-        return;
-    }
-    
-    char lines[512][512];
-    int li = 0;
-    Option options[10];
-    int opti = 0;
-    
-    int optm = 0;
-    int ch;
-    while ((ch = fgetc(fp)) != EOF){
-    	ungetc(ch, fp);
-    	
-    	char line[512] = "";
-    	if (!optm){
-			if (fgets(line, sizeof(line), fp) != NULL) {
-				int len = strlen(line);
-				if (len > 0 && line[len - 1] != '\n') {
-					line[len] = '\n';
-					line[len + 1] = '\0';
+	
+	// Reading file
+	int optMode = 0;
+	char *line;
+	while ((line = readLine(fp, !optMode)) != NULL){
+		if (strcmp(line, "#opt\n") != 0 && !optMode){ // Read until option
+			if (strcmp(line, "") != 0){
+				Line *nl = malloc(sizeof(Line));
+				
+				nl->line = line;
+				nl->next = NULL;
+				
+				// You might be familiar with this
+				// Yep, it's pushTail for single-linked list
+				// Why not double-linked list?
+				// Well, you see, there's no reason for us to get prev
+				// We always move forward here
+				if (head == NULL){
+					head = nl;
+				}else{
+					Line *curr = head;
+					while (curr->next != NULL){
+						curr = curr->next;
+					}
+					
+					curr->next = nl;
 				}
 			}
-		}else{
-			Option opt;
-			fscanf(fp, "%[^#]#%[^\n]\n", opt.optText, opt.optDest);
-			options[opti++] = opt;
-		}
-		
-		if (strcmp(line, "#opt\n") == 0){
-    		optm = 1;
-		}else if (line[0] != '-' && line[1] != '-'){
-			strcpy(lines[li++], line);
-		}
-	}
-    
-    fclose(fp);
-    
-    int i;
-    int j;
-    int formatting = 0;
-    int st = 0;
-    printf(RESET);
-    for (i = 0; i < li; i++){
-    	for (j = 0; j < strlen(lines[i]); j++){
-    		if (formatting){
-    			formatting = 0;
-    			printef(lines[i][j]);
-			}else if (lines[i][j] == '#'){
-    			formatting = 1;
+		}else if (optMode){ // read options
+			int txtIdx = 1;
+			int len = strlen(line);
+			char *original = line;
+			
+			while (*(line) != '#' && *(line) != '\0'){
+				txtIdx++;
+				line++;
+			}
+			
+			line = original;
+			
+			char *txt = malloc(txtIdx + 1);
+			int i;
+			for (i = 0; i < txtIdx - 1; i++){
+				txt[i] = *(line++);
+			}
+			txt[txtIdx - 1] = '\0';
+			
+			line = original;
+			
+			char *dest = malloc(len -  txtIdx + 1);
+			strcpy(dest, line + txtIdx);
+			dest[len - txtIdx - 1] = '\0';
+			
+			line = original;
+			
+			free(line);
+			
+			Option *opt = malloc(sizeof(Option));
+			opt->text = txt;
+			opt->to = dest;
+			opt->next = NULL;
+			opt->prev = NULL;
+			
+			// This also might be familiar
+			// It's still pushTail, but double-linked list!
+			if (!oHead && !oTail){
+				oHead = opt;
+				oTail = opt;
+				
+				opt->next = opt;
+				opt->prev = opt;
 			}else{
-				if (kbhit()){
-					getch();
-					st = 1;
-				}
+				oTail->next = opt;
+				opt->prev = oTail;
 				
-				if (st){
-					break;
-				}
+				opt->next = oHead;
+				oHead->prev = opt;
 				
-				printf("%c", lines[i][j]);
-				fflush(stdout);
-				delay(50);
+				oTail = opt;
 			}
+		}else{ // change flag
+			optMode = 1;
 		}
 	}
+	fclose(fp);
 	
-	
-	int s = 0;
+	int sel = 1;
+	Option *selCurr = oHead;
+	Option *oCurr = oHead;
 	int r = 1;
-	printf(RESET);
+	int q = 0;
 	while (r){
 		clear();
-		int i;
-		int j;
-		int formatting = 0;
-		for (i = 0; i < li; i++){
-			for (j = 0; j < strlen(lines[i]); j++){
-				if (formatting){
-					formatting = 0;
-					printef(lines[i][j]);
-				}else if (lines[i][j] == '#'){
-    				formatting = 1;
-				}else{
-					printf("%c", lines[i][j]);
-				}
-			}
+		
+		Line *curr = head;
+		while (curr != NULL){
+			printf("%s", curr->line);
+			curr = curr->next;
 		}
 		
-		for (i = 0; i < opti; i++){
-			printf("%s %s%d. %s\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1, options[i].optText);
-		}
+		int i = 1;
+		do {
+			printf("%s %s%d. %s\n" RESET, oCurr == selCurr ? GREEN ">>" : "  ", oCurr == selCurr ? UNDERLINE : "", i++, oCurr->text);
+			oCurr = oCurr->next;
+		} while (oCurr != oHead);
+		printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection %s[S]%s: Save game %s[Esc]%s: Return to main menu\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET, BOLD YELLOW, RESET, BOLD YELLOW, RESET);
 		
-		switch(getKey()){
-			case 0:
-				break;
+		switch (getKey()){
 			case 1:
-				--s;
-				if (s < 0) s = opti - 1;
+				selCurr = selCurr->prev;
 				break;
 			case 2:
-				++s;
-				if (s > opti - 1) s = 0;
+				selCurr = selCurr->next;
 				break;
 			case 3:
 				r = 0;
 				break;
 			case 4:
-				r = 0;
-				saveGame(pos);
-				return;
+				saveGame(file);
+				break;
+			case 5:
+				q = confirmAction("return to main menu");
+				r = !q;
 		}
 	}
-    storyRunner(options[s].optDest);
+	
+	free(file);
+	if (!q){
+		storyRunner(selCurr->to);
+	}
+	cleanup(); // Cleaning up for when we no longer need to call recursively
 }
 
+// Load me up
+// When november ends
 void loadGame(){
-	clear();
-	FILE *fp = fopen("saves.txt", "r");
-	if (!fp){
-		fp = fopen("saves.txt", "w+");
-	}
-	int i;
+	pullSaves(0);
 	
-	Save saves[5];
-	for (i = 0; i < 5; i++){
-		strcpy(saves[i].saveDest, "EMPTY");
-		strcpy(saves[i].saveName, "EMPTY");
-	}
-	
-	int si = 0;
-	int ch;
-	while ((ch = fgetc(fp)) != EOF && si < 5){
-		ungetc(ch, fp);
-		Save save;
-		fscanf(fp, "%[^#]#%[^\n]\n", save.saveName, save.saveDest);
-		saves[si++] = save;
-	}
-	
-	fclose(fp);
-	
-	int s = 0;
+	Save *sel = sHead;
 	int r = 1;
+	int c = 0;
 	while (r){
 		clear();
-		for (i = 0; i < 5; i++){
-			if (strcmp(saves[i].saveName, "EMPTY") == 0 && strcmp(saves[i].saveDest, "EMPTY") == 0){
-				printf("%s %s%d. Empty Save\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1);
-			}else{
-				printf("%s %s%d. %s\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1, saves[i].saveName);
-			}
-		}
-		switch(getKey()){
-			case 0:
-				break;
-			case 1:
-				--s;
-				if (s < 0) s = 4;
-				break;
-			case 2:
-				++s;
-				if (s > 4) s = 0;
-				break;
-			case 3:
-				if (strcmp(saves[s].saveName, "EMPTY") == 0 && strcmp(saves[s].saveDest, "EMPTY") == 0){
-					printf("This slot doesn't have any save!\n");
-					pause();
-				}else{
-					storyRunner(saves[s].saveDest);
-					return;
-				}
-				break;
-			case 4:
-				return;
-		}
-	}
-}
-
-void deleteSave(){
-	clear();
-	FILE *fp = fopen("saves.txt", "r");
-	if (!fp){
-		fp = fopen("saves.txt", "w+");
-	}
-	int i;
-	
-	Save saves[5];
-	for (i = 0; i < 5; i++){
-		strcpy(saves[i].saveDest, "EMPTY");
-		strcpy(saves[i].saveName, "EMPTY");
-	}
-	
-	int si = 0;
-	int ch;
-	while ((ch = fgetc(fp)) != EOF && si < 5){
-		ungetc(ch, fp);
-		Save save;
-		fscanf(fp, "%[^#]#%[^\n]\n", save.saveName, save.saveDest);
-		saves[si++] = save;
-	}
-	
-	fclose(fp);
-	
-	int s = 0;
-	int r = 1;
-	while (r){
-		clear();
-		for (i = 0; i < 5; i++){
-			if (strcmp(saves[i].saveName, "EMPTY") == 0 && strcmp(saves[i].saveDest, "EMPTY") == 0){
-				printf("%s %s%d. Empty Save\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1);
-			}else{
-				printf("%s %s%d. %s\n" RESET, (s == i) ? GREEN ">>" : "  ", (s == i) ? UNDERLINE : "", i + 1, saves[i].saveName);
-			}
-		}
-		switch(getKey()){
-			case 0:
-				break;
-			case 1:
-				--s;
-				if (s < 0) s = 4;
-				break;
-			case 2:
-				++s;
-				if (s > 4) s = 0;
-				break;
-			case 3:
-				if (strcmp(saves[s].saveName, "EMPTY") == 0 && strcmp(saves[s].saveDest, "EMPTY") == 0){
-					printf("This slot doesn't have any save!\n");
-					pause();
-				}else{
+		printf("Saved Games\n");
+		
+		int i = 1;
+		// I originally forgot to handle the case where no save exist
+		// As bandaid as this looks, this is final
+		if (sHead != NULL){
+			Save *curr = sHead;
+			do{
+				printf("%s %s%d. %s\n" RESET, curr == sel ? GREEN ">>" : "  ", curr == sel ? UNDERLINE : "", i++, curr->name);
+				printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection %s[Esc]%s: Return to main menu\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET, BOLD YELLOW, RESET);
+				curr = curr->next;
+			}while (curr != sHead);
+			
+			switch (getKey()){
+				case 1: // Up
+					sel = sel->prev;
+					break;
+				case 2: // Down
+					sel = sel->next;
+					break;
+				case 3: // Enter
+					r = 0;
+					c = 1;
+					break;
+				case 5: // Escape (No loading) :(
 					r = 0;
 					break;
-				}
-				break;
-			case 4:
-				return;
+			}
+		}else{
+			printf("There are no saved game\n");
+			r = 0;
+			pause();
 		}
 	}
 	
-	int o;
-	printf("Are you sure you want to delete this save (Y|N)?\n");
-	while (1){
-		char c = getch();
-		if (c == 'y' || c == 'n'){
-			o = (c == 'y') ? 1 : 0;
-			break;
-		}
+	char *temp;
+	if (c){ // I need to clean sHead and sTail, so I needed to copy the value before passing
+		temp = malloc(strlen(sel->pos) + 1);
+		strcpy(temp, sel->pos);
 	}
-	if (o){
-		strcpy(saves[s].saveDest, "EMPTY");
-		strcpy(saves[s].saveName, "EMPTY");
-		fp = fopen("saves.txt", "w");
-		for (i = 0; i < 5; i++){
-			fprintf(fp, "%s#%s\n", saves[i].saveName, saves[i].saveDest);
-		}
-		
-		printf("Your save has been deleted!\n");
-		pause();
+	
+	saveAndClean();
+	
+	if (c){ // And into the story we go
+		storyRunner(temp);
+		free(temp);
 	}
-	fclose(fp);
-	return;
 }
 
-Setting readSettings(){
-	FILE *fp = fopen("settings.txt", "r");
+// NOOOooooo.....
+void deleteSave(){
+	pullSaves(0);
 	
-	Setting setting;
-	strcpy(setting.title, "");
-	strcpy(setting.init, "");
-	
-	if (!fp){
-		printf(RED BOLD "WARNING: Could not find game setting!" RESET);
-		return setting;
-	}
-	
-	char title[256] = "";
-	int titleM = 1;
-	int ch;
-	while ((ch = fgetc(fp)) != EOF){
-		ungetc(ch, fp);
-		char temp[256];
-		fscanf(fp, "%[^\n]\n", temp);
+	Save *sel = sHead;
+	int r = 1;
+	int c = 0;
+	while (r){
+		clear();
+		printf("Saved Games\n");
 		
-		if (strcmp(temp, "#end") == 0){
-			if (titleM){
-				titleM = 0;
-			}else{
-				break;
+		int i = 1;
+		// I originally forgot to handle the case where no save exist
+		// As bandaid as this looks, this is final
+		if (sHead != NULL){
+			Save *curr = sHead;
+			do{
+				printf("%s %s%d. %s\n" RESET, curr == sel ? GREEN ">>" : "  ", curr == sel ? UNDERLINE : "", i++, curr->name);
+				printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection %s[Esc]%s: Return to main menu\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET, BOLD YELLOW, RESET);
+				curr = curr->next;
+			}while (curr != sHead);
+			
+			switch (getKey()){
+				case 1: // Up
+					sel = sel->prev;
+					break;
+				case 2: // Down
+					sel = sel->next;
+					break;
+				case 3: // Left (Wait what... No! This is enter!)
+					c = confirmAction("delete this save");
+					r = !c;
+					break;
+				case 5: // Right (Not again... we just simply cancels here)
+					r = 0;
+					break;
 			}
-		}
-		
-		if (titleM){
-			strcat(title, temp);
-			strcat(title, "\n");
 		}else{
-			strcpy(setting.init, temp);
+			printf("There are no saved game\n");
+			r = 0;
+			pause();
 		}
 	}
-	strcpy(setting.title, title);
 	
-	fclose(fp);
+	// No this isn't complicated
+	// This is popMid for doubly-linked list
+	if (c){
+		if (sel == sHead && sel == sTail){
+			free(sel);
+			sHead = NULL;
+			sTail = NULL;
+		}else if (sel == sHead){
+			sHead = sHead->next;
+			sHead->prev = sTail;
+			sTail->next = sHead;
+			free(sel);
+		}else if (sel == sTail){
+			sTail = sTail->prev;
+			sTail->next = sHead;
+			sHead->prev = sTail;
+		}else{
+			sel->prev->next = sel->next;
+			sel->next->prev = sel->prev;
+			free(sel);
+		}
+	}
 	
-	return setting;
+	saveAndClean();
 }
 
 int main(){
-	int s = 1;
-	int i;
-	int t = 0;
+	int s = 0;
+	int r = 1;
 	
-	Setting setting = readSettings();
-	
-	do{
+	do {
 		clear();
-		printf("%s\n", setting.title);
-		printf("%s  %sNew Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
-		printf("%s  %sLoad Game\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
-		printf("%s  %sDelete Save\n" RESET, (s == 3) ? GREEN ">>" : "  ", (s == 3) ? UNDERLINE : "");
-		printf("%s  %sQuit\n" RESET, (s == 4) ? GREEN ">>" : "  ", (s == 4) ? UNDERLINE : "");
 		
+		// Title screen
+		// TODO: Read title from config file
+		printf("%s\n", "TITLE");
+		printf("%s  %sNew Game\n" RESET, (s == 0) ? GREEN ">>" : "  ", (s == 0) ? UNDERLINE : "");
+		printf("%s  %sLoad Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
+		printf("%s  %sDelete Save\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
+		printf("%s  %sUnlocked Endings\n" RESET, (s == 3) ? GREEN ">>" : "  ", (s == 3) ? UNDERLINE : "");
+		printf("%s  %sQuit\n" RESET, (s == 4) ? GREEN ">>" : "  ", (s == 4) ? UNDERLINE : "");
+		printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET);
+		
+		// Wait for user input
 		switch(getKey()){
-			case 0:
-				break;
-			case 1:
+			case 1: // Move menu pointer up
 				--s;
-				if (s < 1) s = 4;
+				if (s < 0) s = 4;
 				break;
-			case 2:
+			case 2: // Move menu pointer down
 				++s;
-				if (s > 4) s = 1;
+				if (s > 4) s = 0;
 				break;
-			case 3:
-				if (s == 4){
-					t = 1;
-				}else if (s == 1){
-					storyRunner(setting.init);
-				}else if (s == 2){
-					loadGame();
-				}else{
-					deleteSave();
+			case 3: // Enter pressed
+				switch (s){
+					case 0: // New Game
+						// TODO: pull starting point from config file
+						storyRunner("Intro.txt");
+						s = 0;
+						break;
+					case 1: // Load Game
+						loadGame();
+						s = 0;
+						break;
+					case 2: // Delete Save
+						deleteSave();
+						s = 0;
+						break;
+					case 3: // Unlocked Endings
+						// TODO: Make list of ending
+						printf("Coming soon\n");
+						pause();
+//						s = 0;
+						break;
+					case 4: // Quit
+						clear();
+						r =  !confirmAction("quit");
+						s = 0;
+						break;
 				}
 				break;
-			case 4:
-				t = 1;
+			default: // Any other key
 				break;
 		}
-	}while (!t);
+	}while (r);
+	
 	clear();
-	printf("See you next time!\n");
+	printf(BOLD BLUE "See yoou later!\n" RESET); // Goodbye :)
 	
 	return 0;
 }
