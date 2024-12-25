@@ -48,6 +48,13 @@ typedef struct Settings{
 	char *entryPoint;
 } Settings;
 
+// Endings reading
+typedef struct Ending{
+	char endingName[64];
+	char endDesc[128];
+	int found;
+} Ending;
+
 // Globals
 Line *head = NULL;
 Option *oHead = NULL;
@@ -83,13 +90,15 @@ void cleanup(){
 	oTail = NULL;
 }
 
-// Universal implementation for clearing terminal
+// clear!
 void clear(){
 	printf("\033[H\033[J");
 	fflush(stdout);
 }
 
-// Universal implementation for pausing
+// Wait... You can't pause a game!
+// Oh wait it's just online games?
+// Silly me :)
 void pause(){
 	printf("Press any key to continue...");
 	getch();
@@ -431,6 +440,64 @@ void saveGame(const char *file){
 	saveAndClean();
 }
 
+// discover ending then return its desc
+Ending *discoverEnding(const char *endingName){
+	FILE *fp = fopen("endings.txt", "r");
+	
+	int buff = 20;
+	Ending **endings = malloc(buff * sizeof(Ending *));
+	
+	int prevFound = 0;
+	int i = 0;
+	int f = -1;
+	char c;
+	while ((c = getc(fp)) != EOF){
+		ungetc(c, fp);
+		if (i + 2 >= buff){
+			buff *= 2;
+			realloc(endings, buff * sizeof(Ending *));
+		}
+		
+		endings[i] = malloc(sizeof(Ending));
+		
+		fscanf(fp, "%[^#]#%[^#]#%d\n", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
+		// Technically speaking, this is linear search
+		// Not in the traditional sense tho
+		if (strcmp(endings[i]->endingName, endingName) == 0) {
+			f = i;
+			prevFound = endings[i]->found;
+			endings[i]->found = 1;
+		}
+		i++;
+	}
+	
+	fclose(fp);
+	
+	Ending *result;
+	if (f != -1){
+		result = malloc(sizeof(Ending));
+		*result = *endings[f];
+		result->found = prevFound;
+	}
+	
+	int j;
+	fp = fopen("endings.txt", "w");
+	
+	for (j = 0; j < i; j++){
+		fprintf(fp, "%s#%s#%d\n", endings[j]->endingName, endings[j]->endDesc, endings[j]->found);
+		free(endings[j]);
+	}
+	
+	free(endings);
+	fclose(fp);
+	
+	if (f == -1) {
+		return NULL;
+	}else{
+		return result;
+	}
+}
+
 // The heart of the game
 void storyRunner(const char *fileName){
 	// Need to re-reserve memory for file name because cleanup will free it
@@ -443,8 +510,16 @@ void storyRunner(const char *fileName){
 	
 	// Read ending
 	if (file[0] == 'e' && file[1] == 'n' && file[2] == 'd'){
-		printf("You've reached and ending!\n");
-		printf("Ending reached: %s\n", file + 4);
+		Ending *ending = discoverEnding(file + 4);
+		if (ending){
+			printf("%s\n%s\n", ending->endingName, ending->endDesc);
+			if (!ending->found){
+				printf("%s[NEW ENDING!]%s\n", BOLD YELLOW, RESET);
+			}
+			free(ending);
+		}else{ //fallback, read like normal
+			printf("%s\nNo Description\n", file + 4);
+		}
 		pause();
 		cleanup(); // Better try cleaning up than not amirite?
 		return;
@@ -738,6 +813,7 @@ Settings readSettings(){
 	char *line;
 	int appendTo = 0;
 	
+	// Currently disallow replacing symbols due to shared code with path
 	while ((line = readLine(fp, 0)) != NULL){
 		if (strcmp(line, "#start TITLE\n") == 0){
 			appendTo = 1;

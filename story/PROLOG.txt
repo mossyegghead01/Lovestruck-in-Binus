@@ -11,4 +11,4 @@ What will you do?
 
 #opt
 say yes#INTRO.txt
-leave#end RUNNING AWAY
+leave#end Super Shy
