@@ -1,4 +1,8 @@
-Lovestruck in Binus
+#start TITLE
+=================================
+|      Lovestruct In Binus      |
+=================================
 #end
+#start ENTRY_POINT
 PROLOG.txt
 #end

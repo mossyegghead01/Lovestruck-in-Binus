@@ -42,6 +42,12 @@ typedef struct Save{
 	struct Save *prev;
 } Save;
 
+// Just... Settings
+typedef struct Settings{
+	Line *title;
+	char *entryPoint;
+} Settings;
+
 // Globals
 Line *head = NULL;
 Option *oHead = NULL;
@@ -139,7 +145,7 @@ char *readLine(FILE *fp, int replaceSymbols){
 	while (ch != '\n'){
 		ch = fgetc(fp);
 		
-		// Cheeck if line is comment
+		// Check if line is comment
 		if (ch == '-' && replaceSymbols){
 			int ch2 = fgetc(fp);
 			if (ch2 == '-'){
@@ -725,16 +731,64 @@ void deleteSave(){
 	saveAndClean();
 }
 
+Settings readSettings(){
+	Settings settings = {NULL, NULL};
+	FILE *fp = fopen("settings.txt", "r");
+	
+	char *line;
+	int appendTo = 0;
+	
+	while ((line = readLine(fp, 0)) != NULL){
+		if (strcmp(line, "#start TITLE\n") == 0){
+			appendTo = 1;
+        }else if (strcmp(line, "#start ENTRY_POINT\n") == 0){
+			appendTo = 2;
+		}else if (strcmp(line, "#end\n") == 0){
+			appendTo = 0;
+		}else{
+			if (appendTo == 1) {
+				Line *newLine = malloc(sizeof(Line));
+				
+				newLine->line = line;
+				newLine->next = NULL;
+				
+				if (settings.title == NULL) {
+					settings.title = newLine;
+				}else{
+					Line *curr = settings.title;
+					while (curr->next != NULL){
+						curr = curr->next;
+					}
+					curr->next = newLine;
+				}
+			}else if (appendTo == 2){
+				line[strlen(line) - 1] = '\0';
+				settings.entryPoint = line;
+			}else{
+				free(line);
+			}
+		}
+	}
+	
+	fclose(fp);
+	return settings;
+}
+
 int main(){
 	int s = 0;
 	int r = 1;
+	
+	Settings settings = readSettings();
 	
 	do {
 		clear();
 		
 		// Title screen
-		// TODO: Read title from config file
-		printf("%s\n", "TITLE");
+		Line *curr = settings.title;
+		while (curr != NULL){
+			printf("%s", curr->line);
+			curr = curr->next;
+		}
 		printf("%s  %sNew Game\n" RESET, (s == 0) ? GREEN ">>" : "  ", (s == 0) ? UNDERLINE : "");
 		printf("%s  %sLoad Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
 		printf("%s  %sDelete Save\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
@@ -755,8 +809,7 @@ int main(){
 			case 3: // Enter pressed
 				switch (s){
 					case 0: // New Game
-						// TODO: pull starting point from config file
-						storyRunner("Intro.txt");
+						storyRunner(settings.entryPoint);
 						s = 0;
 						break;
 					case 1: // Load Game
@@ -771,7 +824,7 @@ int main(){
 						// TODO: Make list of ending
 						printf("Coming soon\n");
 						pause();
-//						s = 0;
+						s = 0;
 						break;
 					case 4: // Quit
 						clear();
@@ -784,6 +837,15 @@ int main(){
 				break;
 		}
 	}while (r);
+	
+	Line *curr = settings.title;
+	while (curr != NULL){
+		Line *temp = curr;
+		curr = curr->next;
+		free(temp);
+	}
+	
+	free(settings.entryPoint);
 	
 	clear();
 	printf(BOLD BLUE "See yoou later!\n" RESET); // Goodbye :)
