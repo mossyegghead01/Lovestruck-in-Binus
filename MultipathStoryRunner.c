@@ -1,8 +1,8 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <time.h>
 #include <conio.h>
+#include <math.h>
 
 #define RESET       "\x1b[0m"
 #define BOLD        "\x1b[1m"
@@ -50,8 +50,9 @@ typedef struct Settings{
 
 // Endings reading
 typedef struct Ending{
-	char endingName[64];
-	char endDesc[128];
+	// I beg you please don't exceed these limits
+	char endingName[26];
+	char endDesc[65];
 	int found;
 } Ending;
 
@@ -278,8 +279,7 @@ void pullSaves(int addEmpty){
 		strcpy(pos, line + nIdx);
 		pos[len - nIdx - 1] = '\0';
 		
-		line = original;
-		free(line);
+		free(original);
 		
 		Save *sv = malloc(sizeof(Save));
 		sv->name = name;
@@ -514,7 +514,7 @@ void storyRunner(const char *fileName){
 		if (ending){
 			printf("%s\n%s\n", ending->endingName, ending->endDesc);
 			if (!ending->found){
-				printf("%s[NEW ENDING!]%s\n", BOLD YELLOW, RESET);
+				printf("%s[NEW ENDING!]%s\n\n", BOLD YELLOW, RESET);
 			}
 			free(ending);
 		}else{ //fallback, read like normal
@@ -850,6 +850,154 @@ Settings readSettings(){
 	return settings;
 }
 
+void swap(Ending *xp, Ending *yp){
+    Ending temp = *xp;
+    *xp = *yp;
+    *yp = temp;
+}
+
+void sort(Ending **arr, int n, int m){
+    int i, j;
+    int swapped = 0;
+    for (i = 0; i < n - 1; i++) {
+        swapped = 0;
+        for (j = 0; j < n - i - 1; j++) {
+			if ((m == 0 && arr[j]->found < arr[j + 1]->found) || 
+				(m == 1 && arr[j]->found > arr[j + 1]->found) ||
+				(m == 2 && strcmp(arr[j]->endingName, arr[j + 1]->endingName) > 0) ||
+				(m == 3 && strcmp(arr[j]->endingName, arr[j + 1]->endingName) < 0)
+				){
+				swap(arr[j], arr[j + 1]);
+				swapped = 1;
+			}
+        }
+        
+        if (swapped == 0) break;
+    }
+}
+
+// Function to calculate the Levenshtein distance
+int levenshtein(const char *s1, const char *s2){
+	int len1 = strlen(s1);
+	int len2 = strlen(s2);
+	int **d = malloc((len1 + 1) * sizeof(int *));
+	
+	int i;
+	for (i = 0; i <= len1; i++){
+		d[i] = malloc((len2 + 1) * sizeof(int));
+		d[i][0] = i; // Deletion
+	}
+	
+	int j;
+	for (j = 0; j <= len2; j++){
+		d[0][j] = j; // Insertion
+	}
+	
+	for (i = 1; i <= len1; i++){
+		for (j = 1; j <= len2; j++){
+			int cost = (s1[i - 1] == s2[j - 1]) ? 0 : 1;
+			d[i][j] = fmin(fmin(d[i - 1][j] + 1, d[i][j - 1] + 1), d[i - 1][j - 1] + cost);
+		}
+	}
+	
+	int distance = d[len1][len2];
+	
+	for (i = 0; i <= len1; i++){
+		free(d[i]);
+	}
+	free(d);
+	
+	return distance;
+}
+
+void endingsMenu(){
+	FILE *fp = fopen("endings.txt", "r");
+	
+	int buff = 20;
+	Ending **endings = malloc(buff * sizeof(Ending *));
+	
+	char ch;
+	int i = 0;
+	while ((ch = getc(fp)) != EOF){
+		ungetc(ch, fp);
+		
+		if (i + 2 >= buff){
+			buff *= 2;
+			realloc(endings, buff * sizeof(Ending *));
+		}
+		
+		endings[i] = malloc(sizeof(Ending));
+		
+		fscanf(fp, "%[^#]#%[^#]#%d\n", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
+		i++;
+	}
+	
+	fclose(fp);
+	
+	int r = 1;
+	int sMode = 0;
+	// 0: Discovered
+	// 1: Undiscovered
+	// 2: Name Desc
+	// 3: Name Asc
+	char filter[25];
+	strcpy(filter, "");
+	do {
+		clear();
+		sort(endings, i, sMode);
+		printf("================================================================================================\n");
+		printf("|        Ending Name        |                            Description                           |\n");
+		printf("================================================================================================\n");
+		int k;
+		for (k = 0; k < i; k++){
+			if ((strcmp(filter, "") == 0) || (strcmp(endings[k]->endingName, filter) == 0) || (levenshtein(filter, endings[k]->endingName) <= 2)){
+				printf("| %-25s | %-64s |\n", endings[k]->endingName, (endings[k]->found) ? endings[k]->endDesc : "???");
+			}
+		}
+		printf("================================================================================================\n\n");
+		if (strcmp(filter, "") != 0){
+			printf("Filter: %s\n", filter);
+		}
+		printf("%s[Esc]%s: Return to main menu %s[Arrow Up/Down]%s: Change Sort Mode (Current: %s) %s[S]%s: %s\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET, 
+			(sMode == 0) ? "Discovered" : 
+			(sMode == 1) ? "Undiscovered" : 
+			(sMode == 2) ? "Name Descending" : "Name Ascending"
+			, BOLD YELLOW, RESET, (strcmp(filter, "") == 0) ? "Search" : "Clear filter");
+		switch(getKey()){
+			case 1:
+				--sMode;
+				if (sMode < 0) {
+					sMode = 3;
+				}
+				break;
+			case 2:
+				++sMode;
+				if (sMode > 3){
+					sMode = 0;
+				}
+				break;
+			case 4:
+				if (strcmp(filter, "") == 0){
+					printf("Enter your filter: ");
+					scanf(" %25[^\n]", filter);
+				}else{
+					strcpy(filter, "");
+				}
+				break;
+			case 5:
+				r = 0;
+				break;
+		}
+	}while (r);
+	
+	int j;
+	for (j = 0; j < i; j++){
+		free(endings[j]);
+	}
+	free(endings);
+	return;
+}
+
 int main(){
 	int s = 0;
 	int r = 1;
@@ -868,7 +1016,7 @@ int main(){
 		printf("%s  %sNew Game\n" RESET, (s == 0) ? GREEN ">>" : "  ", (s == 0) ? UNDERLINE : "");
 		printf("%s  %sLoad Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
 		printf("%s  %sDelete Save\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
-		printf("%s  %sUnlocked Endings\n" RESET, (s == 3) ? GREEN ">>" : "  ", (s == 3) ? UNDERLINE : "");
+		printf("%s  %sEndings\n" RESET, (s == 3) ? GREEN ">>" : "  ", (s == 3) ? UNDERLINE : "");
 		printf("%s  %sQuit\n" RESET, (s == 4) ? GREEN ">>" : "  ", (s == 4) ? UNDERLINE : "");
 		printf("\n%s[Arrow Up/Down]%s: Cycle selection %s[ENTER]%s: Confirm selection\n", BOLD YELLOW, RESET, BOLD YELLOW, RESET);
 		
@@ -897,9 +1045,7 @@ int main(){
 						s = 0;
 						break;
 					case 3: // Unlocked Endings
-						// TODO: Make list of ending
-						printf("Coming soon\n");
-						pause();
+						endingsMenu();
 						s = 0;
 						break;
 					case 4: // Quit
