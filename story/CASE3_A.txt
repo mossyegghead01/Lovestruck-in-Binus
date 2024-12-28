@@ -14,4 +14,4 @@ His perceptiveness catches you off guard. Should you trust him with the truth, o
 
 #opt
 Trust him and explain the situation.#CASE6_A.txt
-Smile awkwardly and leave the conversation.#end congratulations! You are single
+Smile awkwardly and leave the conversation.#end Single

@@ -2,8 +2,6 @@ So, I walked away with the hope that he doesn't follow me around. But while I wa
 
 "you okay?"
 
-#b[PLEASE SAVE HERE TO RETAIN YOUR PROGRESS!]#r
-
 #opt
 "I'm okay" you say while looking down and flustered#CASE3_A.txt
 "I'm okay" you say while looking straight at him and smiling#CASE3_B.txt

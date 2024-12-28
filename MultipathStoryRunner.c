@@ -460,7 +460,7 @@ Ending *discoverEnding(const char *endingName){
 		
 		endings[i] = malloc(sizeof(Ending));
 		
-		fscanf(fp, "%[^#]#%[^#]#%d\n", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
+		fscanf(fp, " %[^#]#%[^#]#%d ", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
 		// Technically speaking, this is linear search
 		// Not in the traditional sense tho
 		if (strcmp(endings[i]->endingName, endingName) == 0) {
@@ -928,7 +928,7 @@ void endingsMenu(){
 		
 		endings[i] = malloc(sizeof(Ending));
 		
-		fscanf(fp, "%[^#]#%[^#]#%d\n", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
+		fscanf(fp, " %[^#]#%[^#]#%d ", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
 		i++;
 	}
 	

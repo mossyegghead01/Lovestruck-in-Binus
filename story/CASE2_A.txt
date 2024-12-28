@@ -4,8 +4,6 @@ So he threw me a playful smile and suddenly whispered, "Can't handle my hotness 
 
 "do you have plans after this?"
 
-#b[PLEASE SAVE HERE TO RETAIN YOUR PROGRESS!]#r
-
 #opt
 Umm... I don't think so#CASE4_A.txt
 I'm sorry, I already have other things planned#CASE4_B.txt
