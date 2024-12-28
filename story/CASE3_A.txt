@@ -1,0 +1,17 @@
+"I'm okay," you say while looking down, flustered. The warmth of his hands on your shoulders is steady, but the moment feels overwhelmingly awkward. You shift your weight slightly, trying to regain composure.
+
+He tilts his head, trying to catch your eyes. "You sure?" His voice is calm, with a hint of concern.
+
+"Yeah," you reply quickly, brushing a strand of hair from your face. "Sorry, I wasn't paying attention."
+
+He chuckles lightly, his grip on your shoulders loosening as he steps back. "Happens to the best of us. Just be careful, alright?"
+
+You nod, mumbling a soft "thanks" before glancing behind you again. The man you were avoiding is nowhere to be seen, but the encounter still lingers in your mind.
+
+The stranger in the cyan shirt notices your unease. "You seem distracted. Are you looking for someone? Or... avoiding someone?"
+
+His perceptiveness catches you off guard. Should you trust him with the truth, or is it better to politely end the conversation and move on?
+
+#opt
+Trust him and explain the situation.#CASE6_A.txt
+Smile awkwardly and leave the conversation.#end congratulations! You are single
