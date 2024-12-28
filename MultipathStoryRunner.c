@@ -515,10 +515,12 @@ void storyRunner(const char *fileName){
 			printf("%s\n%s\n", ending->endingName, ending->endDesc);
 			if (!ending->found){
 				printf("%s[NEW ENDING!]%s\n\n", BOLD YELLOW, RESET);
+			}else{
+				printf("\n");
 			}
 			free(ending);
 		}else{ //fallback, read like normal
-			printf("%s\nNo Description\n", file + 4);
+			printf("%s\nNo Description\n\n", file + 4);
 		}
 		pause();
 		cleanup(); // Better try cleaning up than not amirite?
@@ -595,7 +597,13 @@ void storyRunner(const char *fileName){
 			
 			char *dest = malloc(len -  txtIdx + 1);
 			strcpy(dest, line + txtIdx);
-			dest[len - txtIdx - 1] = '\0';
+//			dest[len - txtIdx - 1] = '\0';
+			strcpy(dest, line + txtIdx);
+			
+			int destLen = strlen(dest);
+			if (destLen > 0 && dest[destLen - 1] == '\n') {
+				dest[destLen - 1] = '\0';
+			}
 			
 			line = original;
 			

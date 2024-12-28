@@ -1,0 +1,13 @@
+"I'm okay," you say while looking straight at him and smiling. His grip on your shoulders loosens as he smiles back, his expression a mixture of concern and relief.
+
+"Good," he says. "You seemed in a hurry. Everything alright?"
+
+You glance behind you instinctively, relieved to find no sign of the person you'd been avoiding. Turning back to the stranger in the cyan shirt, you nod. "Yeah, just... got distracted. Sorry for bumping into you."
+
+"It's no problem," he says, stepping back to give you space. "Are you sure you're okay, though? You looked a little... uneasy."
+
+You hesitate. Should you tell him the truth about the person you were avoiding or brush it off as nothing?
+
+#opt
+Be honest and explain the situation.#CASE7_A.txt
+Downplay it and thank him before leaving.#end Ill feeling
