@@ -1,9 +1,8 @@
 -- prolog
--- this is a comment
 -- opsi: 1. fm 1 batch 2. fl 3. classmate 4. diff major
 WELCOME TO BINUS UNIVERSITY
 
-Today is the first day of FYP, you are shannon, a freshmen who feels lost, lonely, and nervous in the middle of these crowd of strangers. Suddenly, you hear a footstep approach you. 
+Today is the first day of FYP, you are #b#BShannon#r, a freshmen who feels lost, lonely, and nervous in the middle of these crowd of strangers. Suddenly, you hear a footstep approach you. 
 
 "hey? you lost?"
 
