@@ -14,9 +14,7 @@
 #define MAGENTA     "\x1b[35m"
 #define CYAN        "\x1b[36m"
 
-// TODO: Comments...
-// Yeah I'm on the verge of breaking down while writing this TODO
-// Gosh I missed dynamic sized string
+// WHERE ARE MY DYNAMIC STRINGS?!?!?!?!
 
 // Single-linked list structure for file line
 typedef struct Line{
@@ -64,7 +62,9 @@ Save *sHead = NULL;
 Save *sTail = NULL;
 
 // Clean the mess that is using malloc
+// Confused or curious? find out more about linked list and how to delete/pop all
 void cleanup(){
+	// delete all head content
 	while (head){
 		Line *temp = head;
 		head = head->next;
@@ -78,6 +78,7 @@ void cleanup(){
 		oTail->next = NULL;
 	}
 	
+	// delete all options content
 	while (oHead){
 		Option *temp = oHead;
 		oHead = oHead->next;
@@ -86,6 +87,7 @@ void cleanup(){
 		free(temp);
 	}
 	
+	// Let's try to avoid dangling pointers, shall we?
 	head = NULL;
 	oHead = NULL;
 	oTail = NULL;
@@ -93,26 +95,25 @@ void cleanup(){
 
 // clear!
 void clear(){
-	printf("\033[H\033[J");
-	fflush(stdout);
+	printf("\033[H\033[J"); // Any LLM could tell you more about this escape sequence
+	fflush(stdout); // dump everything in the buffer
 }
 
 // Wait... You can't pause a game!
-// Oh wait it's just online games?
+// Oh wait, only online games can't?
 // Silly me :)
 void pause(){
 	printf("Press any key to continue...");
-	getch();
+	getch(); // I did say "any" key
 	printf("\n");
 }
 
 // Get key and return a more readable value representation
-// Only use for some special often-used keys.
-// Example: Up and down key
+// Only use for some special keys, or if you already used this in a switch case (talking about the random 's' check).
 int getKey(){
 	int c = getch();
-    if (c == 0 || c == 224){
-        c = getch();
+    if (c == 0 || c == 224){ // usually arrows is split into two codes, these are the first.
+        c = getch(); // read the actual arrow direction, a.k.a the second code
 		if (c == 72){
 			return 1; // Up
 		}
@@ -126,18 +127,18 @@ int getKey(){
 	}else if(c == 27){
 		return 5; // Escape
 	}
-	return 0;
+	return 0; // None of the above
 }
 
 // Ask user if they understood the consequences of their action...
 int confirmAction(const char *actionName){
 	printf("Are you sure you want to %s (Y/N)?\n", actionName);
 	char key;
-	while (key != 'y' && key != 'n'){
+	while (key != 'y' && key != 'n'){ // Yeah, I insist that they use either key in this prompt.
 		key = getch();
 	}
 	
-	return (key == 'y') ? 1 : 0;
+	return (key == 'y') ? 1 : 0; // It's just ternary, please...
 }
 
 // Read file line and return pointer
@@ -1010,17 +1011,19 @@ int main(){
 	int s = 0;
 	int r = 1;
 	
-	Settings settings = readSettings();
+	Settings settings = readSettings(); // Read story setting (config sounds more fitting, idk why I named it this. Just, pick whichever makes more sense to you)
 	
 	do {
 		clear();
 		
 		// Title screen
+		// title is multiline, thus the loop, it's reading a linked list
 		Line *curr = settings.title;
 		while (curr != NULL){
 			printf("%s", curr->line);
 			curr = curr->next;
 		}
+		// Fancy menu
 		printf("%s  %sNew Game\n" RESET, (s == 0) ? GREEN ">>" : "  ", (s == 0) ? UNDERLINE : "");
 		printf("%s  %sLoad Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
 		printf("%s  %sDelete Save\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
@@ -1068,6 +1071,7 @@ int main(){
 		}
 	}while (r);
 	
+	// Free the allocated memory from reading setting/config
 	Line *curr = settings.title;
 	while (curr != NULL){
 		Line *temp = curr;
