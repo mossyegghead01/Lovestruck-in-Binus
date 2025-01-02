@@ -6,4 +6,4 @@ Date#Time for a date!#0
 Single#Congratulations! You are single!#0
 Bold#Go for it or never#0
 Ill feeling#This.. doesn't feels right?#0
-Stranger#Just like a normal phase of love right?.. single-talking-single. Good job!#0 
+Stranger#Just like a normal phase of love right? Strangers#0 
