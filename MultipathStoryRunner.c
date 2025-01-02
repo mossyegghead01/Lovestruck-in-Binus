@@ -14,8 +14,6 @@
 #define MAGENTA     "\x1b[35m"
 #define CYAN        "\x1b[36m"
 
-// WHERE ARE MY DYNAMIC STRINGS?!?!?!?!
-
 // Single-linked list structure for file line
 typedef struct Line{
 	char *line;
@@ -40,13 +38,13 @@ typedef struct Save{
 	struct Save *prev;
 } Save;
 
-// Just... Settings
+// The settings/config of the game (supposed to be config)
 typedef struct Settings{
 	Line *title;
 	char *entryPoint;
 } Settings;
 
-// Endings reading
+// Struct to read the ending
 typedef struct Ending{
 	// I beg you please don't exceed these limits
 	char endingName[26];
@@ -74,7 +72,7 @@ void cleanup(){
 	
 	if (oTail){
 		// if Tail exist, it probably has link to head.
-		// Making it null prevent the pointer from going around and try to free an already freed mem
+		// Making it null to prevent the pointer from going around and try to free an already freed memory
 		oTail->next = NULL;
 	}
 	
@@ -87,24 +85,22 @@ void cleanup(){
 		free(temp);
 	}
 	
-	// Let's try to avoid dangling pointers, shall we?
+	// Avoid dangling pointers
 	head = NULL;
 	oHead = NULL;
 	oTail = NULL;
 }
 
-// clear!
+// To clear the text on the screen
 void clear(){
-	printf("\033[H\033[J"); // Any LLM could tell you more about this escape sequence
-	fflush(stdout); // dump everything in the buffer
+	printf("\033[H\033[J"); 
+	fflush(stdout); 
 }
 
-// Wait... You can't pause a game!
-// Oh wait, only online games can't?
-// Silly me :)
+// Function to pause the game
 void pause(){
 	printf("Press any key to continue...");
-	getch(); // I did say "any" key
+	getch(); //Because on the printf it says "any" key
 	printf("\n");
 }
 
@@ -134,16 +130,14 @@ int getKey(){
 int confirmAction(const char *actionName){
 	printf("Are you sure you want to %s (Y/N)?\n", actionName);
 	char key;
-	while (key != 'y' && key != 'n'){ // Yeah, I insist that they use either key in this prompt.
+	while (key != 'y' && key != 'n'){ 
 		key = getch();
 	}
 	
-	return (key == 'y') ? 1 : 0; // It's just ternary, please...
+	return (key == 'y') ? 1 : 0; // Use ternary to return 1 if the key pressed is 'y' and 0 otherwise
 }
 
 // Read file line and return pointer
-// Why pointer you might ask?
-// It's easier in some cases
 char *readLine(FILE *fp, int replaceSymbols){
 	int buffSize = 128;
 	
@@ -177,7 +171,7 @@ char *readLine(FILE *fp, int replaceSymbols){
 			break;
 		}
 		
-		// We need more RAM!
+		// We need more RAM
 		if (pos + 5 >= buffSize - 1){
 			buffSize *= 2; // To infinity and trash bin
 			line = realloc(line, buffSize);
@@ -244,8 +238,7 @@ char *readLine(FILE *fp, int replaceSymbols){
 	return line;
 }
 
-// Pull the lever kronk
-// proceed to pull saves instead
+// proceed to pull saves
 void pullSaves(int addEmpty){
 	FILE *fp = fopen("saves.txt", "r");
 	if (!fp){
@@ -333,8 +326,7 @@ void pullSaves(int addEmpty){
 	}
 }
 
-// Wrong levahhhhhhhh
-// And flushed
+// save the progress and clean the terminal
 void saveAndClean(){
 	FILE *fp = fopen("saves.txt", "w");
 	
@@ -441,7 +433,7 @@ void saveGame(const char *file){
 	saveAndClean();
 }
 
-// discover ending then return its desc
+// to discover the ending then return its desc
 Ending *discoverEnding(const char *endingName){
 	FILE *fp = fopen("endings.txt", "r");
 	
@@ -462,8 +454,7 @@ Ending *discoverEnding(const char *endingName){
 		endings[i] = malloc(sizeof(Ending));
 		
 		fscanf(fp, " %[^#]#%[^#]#%d ", endings[i]->endingName, endings[i]->endDesc, &endings[i]->found);
-		// Technically speaking, this is linear search
-		// Not in the traditional sense tho
+		// Use linear search
 		if (strcmp(endings[i]->endingName, endingName) == 0) {
 			f = i;
 			prevFound = endings[i]->found;
@@ -499,10 +490,9 @@ Ending *discoverEnding(const char *endingName){
 	}
 }
 
-// The heart of the game
+// The function run the game
 void storyRunner(const char *fileName){
-	// Need to re-reserve memory for file name because cleanup will free it
-	// It's quite miraculous that the cleanup didn't cause issue earlier tbh
+	// Re-reserve memory for file name because cleanup will free it
 	char *file = malloc(strlen(fileName) + 1);
 	strcpy(file, fileName);
 	
@@ -520,11 +510,11 @@ void storyRunner(const char *fileName){
 				printf("\n");
 			}
 			free(ending);
-		}else{ //fallback, read like normal
+		}else{ 
 			printf("%s\nNo Description\n\n", file + 4);
 		}
 		pause();
-		cleanup(); // Better try cleaning up than not amirite?
+		cleanup(); 
 		return;
 	}
 	
@@ -536,7 +526,7 @@ void storyRunner(const char *fileName){
 	
 	// Open the file
 	FILE *fp = fopen(fullPath, "r");
-	// Well, I'm pretty sure we're going to encounter these a lot...
+	// Check if the file exist or not
 	if (fp == NULL){
 		printf("Seems like this part of the story is missing!\n");
 		printf("Why not return later?\n");
@@ -559,11 +549,7 @@ void storyRunner(const char *fileName){
 				nl->line = line;
 				nl->next = NULL;
 				
-				// You might be familiar with this
-				// Yep, it's pushTail for single-linked list
-				// Why not double-linked list?
-				// Well, you see, there's no reason for us to get prev
-				// We always move forward here
+				// PushTail for single-linked list
 				if (head == NULL){
 					head = nl;
 				}else{
@@ -616,8 +602,7 @@ void storyRunner(const char *fileName){
 			opt->next = NULL;
 			opt->prev = NULL;
 			
-			// This also might be familiar
-			// It's still pushTail, but double-linked list!
+			// PushTail for double-linked list!
 			if (!oHead && !oTail){
 				oHead = opt;
 				oTail = opt;
@@ -686,8 +671,7 @@ void storyRunner(const char *fileName){
 	cleanup(); // Cleaning up for when we no longer need to call recursively
 }
 
-// Load me up
-// When november ends
+// To load saved games
 void loadGame(){
 	pullSaves(0);
 	
@@ -699,8 +683,6 @@ void loadGame(){
 		printf("Saved Games\n");
 		
 		int i = 1;
-		// I originally forgot to handle the case where no save exist
-		// As bandaid as this looks, this is final
 		if (sHead != NULL){
 			Save *curr = sHead;
 			do{
@@ -720,7 +702,7 @@ void loadGame(){
 					r = 0;
 					c = 1;
 					break;
-				case 5: // Escape (No loading) :(
+				case 5: // Escape (No loading)
 					r = 0;
 					break;
 			}
@@ -739,13 +721,13 @@ void loadGame(){
 	
 	saveAndClean();
 	
-	if (c){ // And into the story we go
+	if (c){ 
 		storyRunner(temp);
 		free(temp);
 	}
 }
 
-// NOOOooooo.....
+// To delete previous saved progress
 void deleteSave(){
 	pullSaves(0);
 	
@@ -757,8 +739,6 @@ void deleteSave(){
 		printf("Saved Games\n");
 		
 		int i = 1;
-		// I originally forgot to handle the case where no save exist
-		// As bandaid as this looks, this is final
 		if (sHead != NULL){
 			Save *curr = sHead;
 			do{
@@ -774,11 +754,11 @@ void deleteSave(){
 				case 2: // Down
 					sel = sel->next;
 					break;
-				case 3: // Left (Wait what... No! This is enter!)
+				case 3: // Left 
 					c = confirmAction("delete this save");
 					r = !c;
 					break;
-				case 5: // Right (Not again... we just simply cancels here)
+				case 5: // Right 
 					r = 0;
 					break;
 			}
@@ -1011,7 +991,7 @@ int main(){
 	int s = 0;
 	int r = 1;
 	
-	Settings settings = readSettings(); // Read story setting (config sounds more fitting, idk why I named it this. Just, pick whichever makes more sense to you)
+	Settings settings = readSettings(); // Read story setting (config)
 	
 	do {
 		clear();
@@ -1023,7 +1003,7 @@ int main(){
 			printf("%s", curr->line);
 			curr = curr->next;
 		}
-		// Fancy menu
+		// Game menu
 		printf("%s  %sNew Game\n" RESET, (s == 0) ? GREEN ">>" : "  ", (s == 0) ? UNDERLINE : "");
 		printf("%s  %sLoad Game\n" RESET, (s == 1) ? GREEN ">>" : "  ", (s == 1) ? UNDERLINE : "");
 		printf("%s  %sDelete Save\n" RESET, (s == 2) ? GREEN ">>" : "  ", (s == 2) ? UNDERLINE : "");
@@ -1082,7 +1062,7 @@ int main(){
 	free(settings.entryPoint);
 	
 	clear();
-	printf(BOLD BLUE "See yoou later!\n" RESET); // Goodbye :)
+	printf(BOLD BLUE "See yoou later!\n" RESET);
 	
 	return 0;
 }
